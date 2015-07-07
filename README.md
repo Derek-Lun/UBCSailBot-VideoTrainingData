@@ -4,11 +4,11 @@
 UBCSailBot-VideoTrainingData is a tool intended to ease the creation of training data for machine learning from human input. This tool converts the human input to generate a file with .label extension that is used as training data for obstacle detection algorithm. The standard format for this file can be found at demo_metainfo_label.
 
 ## Usage
-Install the requirements and opencv first
+Install the requirements and opencv
 
 ```sudo pip install -r requirements.txt```
 
-Pass a video file
+Run the script and pass in a video file as the first argument
 
 ```python main.py boat.avi```
 
