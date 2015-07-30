@@ -6,29 +6,31 @@ import logWrite
 
 frame_metadata = {}
 ROIs = set()
-is_mouse_down = false
+is_mouse_down = False
 
 def on_mouse(event, x, y, flags, frame):
     frameRect = copy.copy(frame)
     global start_position
-    is_mouse_down = true
+    global is_mouse_down
+
     if event == cv2.cv.CV_EVENT_LBUTTONDOWN:
+        is_mouse_down = True
         ROIs.add((x/4, y/4))
         for ROI in ROIs:
             cv2.rectangle(frameRect, ROI, ROI, (0,0,255), 1)
         frameRect = cv2.resize(frameRect, (0,0), fx=4, fy=4, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frameRect)
 
+    elif event == cv2.cv.CV_EVENT_LBUTTONUP:
+        is_mouse_down = False
+
     elif event == cv2.cv.CV_EVENT_MOUSEMOVE:
-        if (is_mouse_down == true):
+        if (is_mouse_down == True):
             ROIs.add((x/4, y/4))
             for ROI in ROIs:
                 cv2.rectangle(frameRect, ROI, ROI, (0,0,255), 1)
             frameRect = cv2.resize(frameRect, (0,0), fx=4, fy=4, interpolation=cv2.INTER_NEAREST)
             cv2.imshow('frame',frameRect)
-
-    elif event == cv2.cv.CV_EVENT_LBUTTONUP:
-        is_mouse_down = false
 
     elif event == cv2.cv.CV_EVENT_RBUTTONDOWN:
         #print 'End Right Mouse Position: '+str(x)+', '+str(y)
