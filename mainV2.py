@@ -62,6 +62,7 @@ def on_mouse(event, x, y, flags, frame):
         height, width, channels = frame.shape
         highlighted_area = np.zeros((height, width, 3), np.uint8)
 
+        frameRect = cv2.addWeighted(frameRect, 0.7, highlighted_area, 0.3, 0)
         frameRect = cv2.resize(frameRect, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frameRect)
 
@@ -93,7 +94,7 @@ def main(argv):
 
         cv2.putText(frame,
         str(int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))),
-        (12, 15),
+        (6, 18),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.8,
         (255, 0, 0))
@@ -101,8 +102,8 @@ def main(argv):
         cv2.namedWindow('frame')
         cv2.cv.SetMouseCallback('frame', on_mouse, frame)
 
+        frame = cv2.addWeighted(frame, 0.7, highlighted_area, 0.3, 0)
         frame = cv2.resize(frame, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
-
         cv2.imshow('frame',frame)
 
         k = 0
