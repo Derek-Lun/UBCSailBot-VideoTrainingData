@@ -9,28 +9,16 @@ import constant
 frame_metadata = {}
 ROIs = set()
 is_mouse_down = False
-k = -1
 selected_area = None
-
-def num_key_lookup(num_key):
-    return { '1' : 1,
-        '2' : 2,
-        '3' : 3,
-        '4' : 4,
-        '5' : 5,
-        '6' : 6,
-        '7' : 7,
-        '8' : 8,
-        '9' : 9,
-    }.get(num_key, 0)
+highlighted_area = None
+brush_size = 0
 
 def select_pixels(x, y):
-    global k
     global selected_area
+    global brush_size
 
-    n = num_key_lookup(k)
-    for x_ in xrange(x-n, x+n+1):
-        for y_ in xrange(y-n, y+n+1):
+    for x_ in xrange(x-brush_size+1, x+brush_size):
+        for y_ in xrange(y-brush_size+1, y+brush_size):
             ROIs.add((x_, y_))
             cv2.rectangle(selected_area, (x_, y_), (x_, y_), (0,0,255), 1)
 
@@ -38,9 +26,8 @@ def highlight_pixels(x, y):
     global k
     global highlighted_area
 
-    n = num_key_lookup(k)
-    for x_ in xrange(x-n, x+n+1):
-        for y_ in xrange(y-n, y+n+1):
+    for x_ in xrange(x-brush_size+1, x+brush_size):
+        for y_ in xrange(y-brush_size+1, y+brush_size):
             cv2.rectangle(highlighted_area, (x_, y_), (x_, y_), (255,0,0), 1)
 
 def on_mouse(event, x, y, flags, frame):
@@ -83,8 +70,8 @@ def on_mouse(event, x, y, flags, frame):
         cv2.imshow('frame',frameRect)
 
 def main(argv):
-    global k
     global selected_area
+    global brush_size
     global highlighted_area
 
     if len(sys.argv) != 2:
@@ -127,8 +114,11 @@ def main(argv):
         k = 0
         while k not in (chr(27), 'u', 'n', 's', 'w', 's', 'a', 'd'):
             k = chr(cv2.waitKey(0) & 255)
-            print k + " was pressed"
-
+            try:
+                brush_size = int(k)
+            except:
+                print k + " was pressed"
+            
         if k==chr(27):    # Esc key to stop
             break
         elif k=='u':
