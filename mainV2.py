@@ -11,13 +11,12 @@ ROIs = set()
 is_mouse_down = False
 selected_area = None
 highlighted_area = None
-brush_size = 0
+brush_size = 1
 
 def load_ROIs(ROIs_):
     global ROIs
 
     for ROI in ROIs_:
-        #print ROI
         ROIs.add(ROI)
         cv2.rectangle(highlighted_area, ROI, ROI, (0,0,255), 1)
 
@@ -37,7 +36,7 @@ def highlight_pixels(x, y):
 
     for x_ in xrange(x-brush_size+1, x+brush_size):
         for y_ in xrange(y-brush_size+1, y+brush_size):
-            cv2.rectangle(highlighted_area, (x_, y_), (x_, y_), (255,0,0), 1)
+            cv2.rectangle(highlighted_area, (x_, y_), (x_, y_), (0,255,0), 1)
 
 def on_mouse(event, x, y, flags, frame):
     global is_mouse_down
