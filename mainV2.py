@@ -9,10 +9,19 @@ import constant
 frame_metadata = {}
 ROIs = set()
 is_mouse_down = False
-brush_size = 0
+brush_size = 1
 highlighted_area = None
 
+def load_ROIs(ROIs_):
+    global ROIs
+
+    for ROI in ROIs_:
+        #print ROI
+        ROIs.add(ROI)
+        cv2.rectangle(highlighted_area, ROI, ROI, (0,0,255), 1)
+
 def select_pixels(x, y):
+    global ROI
     global brush_size
     global highlighted_area
 
@@ -78,6 +87,10 @@ def main(argv):
 
         height, width, channels = frame.shape
         highlighted_area = np.zeros((height, width, 3), np.uint8)
+        try:
+            load_ROIs(frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))])
+        except:
+            pass
 
         cv2.putText(frame,
         str(int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))),
@@ -100,6 +113,9 @@ def main(argv):
                 brush_size = int(k)
             except:
                 print k + " was pressed"
+
+        if len(ROIs) > 0:
+            frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))] = tuple(ROIs)
             
         if k==chr(27):    # Esc key to stop
             break
@@ -120,9 +136,6 @@ def main(argv):
         elif k=='d':
             pass
 
-        if len(ROIs) > 0:
-            frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))] = tuple(ROIs)
-   
     log.write(collections.OrderedDict(sorted(frame_metadata.items(), key=lambda t: t[0])))
     log.close()
 
