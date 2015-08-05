@@ -16,6 +16,9 @@ brush_size = 1
 def load_ROIs(ROIs_):
     global ROIs
 
+    if not isinstance((), ROIs_):
+        return
+
     for ROI in ROIs_:
         ROIs.add(ROI)
         cv2.rectangle(highlighted_area, ROI, ROI, (0,0,255), 1)
