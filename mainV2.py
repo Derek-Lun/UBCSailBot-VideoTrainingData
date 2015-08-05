@@ -9,8 +9,9 @@ import constant
 frame_metadata = {}
 ROIs = set()
 is_mouse_down = False
-brush_size = 1
+selected_area = None
 highlighted_area = None
+brush_size = 0
 
 def load_ROIs(ROIs_):
     global ROIs
@@ -22,16 +23,25 @@ def load_ROIs(ROIs_):
 
 def select_pixels(x, y):
     global ROI
+    global selected_area
     global brush_size
-    global highlighted_area
 
     for x_ in xrange(x-brush_size+1, x+brush_size):
         for y_ in xrange(y-brush_size+1, y+brush_size):
             ROIs.add((x_, y_))
-            cv2.rectangle(highlighted_area, (x_, y_), (x_, y_), (0,0,255), 1)
+            cv2.rectangle(selected_area, (x_, y_), (x_, y_), (0,0,255), 1)
+
+def highlight_pixels(x, y):
+    global k
+    global highlighted_area
+
+    for x_ in xrange(x-brush_size+1, x+brush_size):
+        for y_ in xrange(y-brush_size+1, y+brush_size):
+            cv2.rectangle(highlighted_area, (x_, y_), (x_, y_), (255,0,0), 1)
 
 def on_mouse(event, x, y, flags, frame):
     global is_mouse_down
+    global selected_area
     global highlighted_area
 
     frameRect = copy.copy(frame)
@@ -39,7 +49,7 @@ def on_mouse(event, x, y, flags, frame):
     if event == cv2.cv.CV_EVENT_LBUTTONDOWN:
         is_mouse_down = True
         select_pixels(x/constant.RESCALE_FACTOR, y/constant.RESCALE_FACTOR)
-        frameRect = cv2.addWeighted(frameRect, 0.7, highlighted_area, 0.3, 0)
+        frameRect = cv2.addWeighted(frameRect, 0.7, selected_area, 0.3, 0)
         frameRect = cv2.resize(frameRect, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frameRect)
 
@@ -49,6 +59,12 @@ def on_mouse(event, x, y, flags, frame):
     elif event == cv2.cv.CV_EVENT_MOUSEMOVE:
         if (is_mouse_down == True):
             select_pixels(x/constant.RESCALE_FACTOR, y/constant.RESCALE_FACTOR)
+            frameRect = cv2.addWeighted(frameRect, 0.7, selected_area, 0.3, 0)
+            frameRect = cv2.resize(frameRect, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
+            cv2.imshow('frame',frameRect)
+        else:
+            highlighted_area = copy.copy(selected_area)
+            highlight_pixels(x/constant.RESCALE_FACTOR, y/constant.RESCALE_FACTOR)
             frameRect = cv2.addWeighted(frameRect, 0.7, highlighted_area, 0.3, 0)
             frameRect = cv2.resize(frameRect, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
             cv2.imshow('frame',frameRect)
@@ -56,13 +72,14 @@ def on_mouse(event, x, y, flags, frame):
     elif event == cv2.cv.CV_EVENT_RBUTTONDOWN:
         ROIs.clear()
         height, width, channels = frame.shape
-        highlighted_area = np.zeros((height, width, 3), np.uint8)
+        selected_area = np.zeros((height, width, 3), np.uint8)
 
-        frameRect = cv2.addWeighted(frameRect, 0.7, highlighted_area, 0.3, 0)
+        frameRect = cv2.addWeighted(frameRect, 0.7, selected_area, 0.3, 0)
         frameRect = cv2.resize(frameRect, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frameRect)
 
 def main(argv):
+    global selected_area
     global brush_size
     global highlighted_area
 
@@ -86,7 +103,8 @@ def main(argv):
             break
 
         height, width, channels = frame.shape
-        highlighted_area = np.zeros((height, width, 3), np.uint8)
+        selected_area = np.zeros((height, width, 3), np.uint8)
+        tempRect = np.zeros((height, width, 3), np.uint8)
         try:
             load_ROIs(frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))])
         except:
@@ -96,13 +114,13 @@ def main(argv):
         str(int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))),
         (6, 18),
         cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
+        0.5,
         (255, 0, 0))
 
         cv2.namedWindow('frame')
         cv2.cv.SetMouseCallback('frame', on_mouse, frame)
 
-        frame = cv2.addWeighted(frame, 0.7, highlighted_area, 0.3, 0)
+        frame = cv2.addWeighted(frame, 0.7, selected_area, 0.3, 0)
         frame = cv2.resize(frame, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frame)
 
