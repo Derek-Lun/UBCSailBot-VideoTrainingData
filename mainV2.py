@@ -102,8 +102,8 @@ def main(argv):
             break
 
         height, width, channels = frame.shape
+        highlighted_area = np.zeros((height, width, 3), np.uint8)
         selected_area = np.zeros((height, width, 3), np.uint8)
-        tempRect = np.zeros((height, width, 3), np.uint8)
         try:
             load_ROIs(frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))])
         except:
@@ -119,7 +119,7 @@ def main(argv):
         cv2.namedWindow('frame')
         cv2.cv.SetMouseCallback('frame', on_mouse, frame)
 
-        frame = cv2.addWeighted(frame, 0.7, selected_area, 0.3, 0)
+        frame = cv2.addWeighted(frame, 0.7, highlighted_area, 0.3, 0)
         frame = cv2.resize(frame, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frame)
 
