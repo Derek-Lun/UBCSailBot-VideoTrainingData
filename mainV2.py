@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
-import copy
-import sys, os
-import collections
+import copy, sys, os, collections
 import logWrite
 import constant
 
@@ -14,8 +12,6 @@ highlighted_area = None
 brush_size = 1
 
 def load_ROIs(ROIs_):
-    global ROIs
-
     if not isinstance(ROIs_, tuple):
         return
 
@@ -24,19 +20,12 @@ def load_ROIs(ROIs_):
         cv2.rectangle(selected_area, ROI, ROI, (0,0,255), 1)
 
 def select_pixels(x, y):
-    global ROI
-    global selected_area
-    global brush_size
-
     for x_ in xrange(x-brush_size+1, x+brush_size):
         for y_ in xrange(y-brush_size+1, y+brush_size):
             ROIs.add((x_, y_))
             cv2.rectangle(selected_area, (x_, y_), (x_, y_), (0,0,255), 1)
 
 def highlight_pixels(x, y):
-    global k
-    global highlighted_area
-
     for x_ in xrange(x-brush_size+1, x+brush_size):
         for y_ in xrange(y-brush_size+1, y+brush_size):
             cv2.rectangle(highlighted_area, (x_, y_), (x_, y_), (0,255,0), 1)
@@ -81,9 +70,7 @@ def on_mouse(event, x, y, flags, frame):
         cv2.imshow('frame',frameRect)
 
 def is_frame_file(f):
-    return f.endswith('.png') or f.endswith('.jpg') or \
-    f.endswith('.jpeg')
-
+    return f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg')
 
 def read_frames_from_video(cap):
     while cap.isOpened:
@@ -110,24 +97,24 @@ def get_frames(frame_location):
     return frames
 
 def get_new_frame_num(offset):
-    global MAX_FRAME_NUM
+    global max_frame_num
     global current_frame_num
 
     new_frame_num = current_frame_num + offset
 
     if new_frame_num < 1:
         new_frame_num = 1
-    elif new_frame_num > MAX_FRAME_NUM:
-        new_frame_num = MAX_FRAME_NUM
+    elif new_frame_num > max_frame_num:
+        new_frame_num = max_frame_num
 
     return new_frame_num    
 
 def main(argv):
-    global selected_area
     global brush_size
+    global selected_area
     global highlighted_area
 
-    global MAX_FRAME_NUM
+    global max_frame_num
     global current_frame_num
 
     if len(sys.argv) != 2:
@@ -136,7 +123,7 @@ def main(argv):
 
     frame_location = sys.argv[1]
     frames = get_frames(frame_location)
-    MAX_FRAME_NUM = len(frames) - 1
+    max_frame_num = len(frames) - 1
 
     if len(frames) == 0:
         print "Error: failed to read frames from ", frame_location
@@ -196,10 +183,12 @@ def main(argv):
             ROIs.clear()
             frame_metadata[current_frame_num] = "UNCERTAIN"
             print "UNCERTAIN"
+            current_frame_num = get_new_frame_num(1)
         elif k=='n':
             ROIs.clear()
             frame_metadata[current_frame_num] = "EMPTY"
             print "EMPTY"
+            current_frame_num = get_new_frame_num(1)
         elif k=='w':
             current_frame_num = get_new_frame_num(-constant.FRAME_SKIP)
         elif k=='s':
