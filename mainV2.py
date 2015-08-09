@@ -16,12 +16,16 @@ brush_size = 1
 def load_ROIs(ROIs_):
     global ROIs
 
-    if not isinstance((), ROIs_):
+    print "ROIS is", ROIs_
+
+    if not isinstance(ROIs_, tuple):
+        print "not a set"
         return
 
+    print "load frame data"
     for ROI in ROIs_:
         ROIs.add(ROI)
-        cv2.rectangle(highlighted_area, ROI, ROI, (0,0,255), 1)
+        cv2.rectangle(selected_area, ROI, ROI, (0,0,255), 1)
 
 def select_pixels(x, y):
     global ROI
@@ -109,8 +113,8 @@ def main(argv):
         selected_area = np.zeros((height, width, 3), np.uint8)
         try:
             load_ROIs(frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))])
-        except:
-            pass
+        except Exception as e:
+            print e
 
         cv2.putText(frame,
         str(int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))),
@@ -122,7 +126,9 @@ def main(argv):
         cv2.namedWindow('frame')
         cv2.cv.SetMouseCallback('frame', on_mouse, frame)
 
-        frame = cv2.addWeighted(frame, 0.7, highlighted_area, 0.3, 0)
+        print highlighted_area
+
+        frame = cv2.addWeighted(frame, 0.7, selected_area, 0.3, 0)
         frame = cv2.resize(frame, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frame)
 
