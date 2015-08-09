@@ -94,11 +94,11 @@ def read_frames_from_video(cap):
             break
 
 def get_frames(frame_location):
-    frames = []
+    frames = [0,]
     is_dir = os.path.isdir(frame_location)
 
     if is_dir:
-        frames = [f for f in os.listdir(frame_location) if is_frame_file(f)]
+        frames = [cv2.imread(os.path.join(frame_location, f)) for f in os.listdir(frame_location) if is_frame_file(f)]
     else:
         cap = cv2.VideoCapture(frame_location)
         if not cap.isOpened():
@@ -109,10 +109,26 @@ def get_frames(frame_location):
 
     return frames
 
+def get_new_frame_num(offset):
+    global MAX_FRAME_NUM
+    global current_frame_num
+
+    new_frame_num = current_frame_num + offset
+
+    if new_frame_num < 1:
+        new_frame_num = 1
+    elif new_frame_num > MAX_FRAME_NUM:
+        new_frame_num = MAX_FRAME_NUM
+
+    return new_frame_num    
+
 def main(argv):
     global selected_area
     global brush_size
     global highlighted_area
+
+    global MAX_FRAME_NUM
+    global current_frame_num
 
     if len(sys.argv) != 2:
         print "Usage: main.py <frame location>"
@@ -120,6 +136,7 @@ def main(argv):
 
     frame_location = sys.argv[1]
     frames = get_frames(frame_location)
+    MAX_FRAME_NUM = len(frames) - 1
 
     if len(frames) == 0:
         print "Error: failed to read frames from ", frame_location
@@ -135,14 +152,18 @@ def main(argv):
         
         frame = frames[current_frame_num]
 
-        height, width, channels = frame.shape
+        try:
+            height, width, channels = frame.shape
+        except:
+            print current_frame_num
         highlighted_area = np.zeros((height, width, 3), np.uint8)
         selected_area = np.zeros((height, width, 3), np.uint8)
         try:
             load_ROIs(frame_metadata[current_frame_num])
         except Exception as e:
-            print "Warning: Failure to load ROIs that were previously chosen for this frame."
-            print e
+            # print "Warning: Failure to load ROIs that were previously chosen for this frame."
+            # print e
+            pass
 
         cv2.putText(frame,
         str(current_frame_num),
@@ -159,7 +180,7 @@ def main(argv):
         cv2.imshow('frame',frame)
 
         k = 0
-        while k not in (chr(27), 'u', 'n', 's', 'w', 's', 'a', 'd'):
+        while k not in (chr(27), 'u', 'n', 's', 'w', 's', 'a', 'd', 'q'):
             k = chr(cv2.waitKey(0) & 255)
             try:
                 brush_size = int(k)
@@ -169,7 +190,7 @@ def main(argv):
         if len(ROIs) > 0:
             frame_metadata[current_frame_num] = tuple(ROIs)
             
-        if k==chr(27):    # Esc key to stop
+        if k==chr(27) or k=='q':    # Esc key or 'q' to stop
             break
         elif k=='u':
             ROIs.clear()
@@ -180,18 +201,17 @@ def main(argv):
             frame_metadata[current_frame_num] = "EMPTY"
             print "EMPTY"
         elif k=='w':
-            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)) - constant.FRAME_SKIP - 1)
+            current_frame_num = get_new_frame_num(-constant.FRAME_SKIP)
         elif k=='s':
-            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)) + constant.FRAME_SKIP - 1)
+            current_frame_num = get_new_frame_num(constant.FRAME_SKIP)
         elif k=='a':
-            cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)) - 2)
+            current_frame_num = get_new_frame_num(-1)
         elif k=='d':
-            pass
+            current_frame_num = get_new_frame_num(1)
 
     log.write(collections.OrderedDict(sorted(frame_metadata.items(), key=lambda t: t[0])))
     log.close()
 
-    cap.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
