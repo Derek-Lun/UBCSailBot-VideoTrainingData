@@ -16,13 +16,9 @@ brush_size = 1
 def load_ROIs(ROIs_):
     global ROIs
 
-    print "ROIS is", ROIs_
-
     if not isinstance(ROIs_, tuple):
-        print "not a set"
         return
 
-    print "load frame data"
     for ROI in ROIs_:
         ROIs.add(ROI)
         cv2.rectangle(selected_area, ROI, ROI, (0,0,255), 1)
@@ -114,6 +110,7 @@ def main(argv):
         try:
             load_ROIs(frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))])
         except Exception as e:
+            print "Warning: Failure to load ROIs that were previously chosen for this frame."
             print e
 
         cv2.putText(frame,
@@ -125,8 +122,6 @@ def main(argv):
 
         cv2.namedWindow('frame')
         cv2.cv.SetMouseCallback('frame', on_mouse, frame)
-
-        print highlighted_area
 
         frame = cv2.addWeighted(frame, 0.7, selected_area, 0.3, 0)
         frame = cv2.resize(frame, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
