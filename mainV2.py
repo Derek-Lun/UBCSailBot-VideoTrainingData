@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import copy
-import sys
+import sys, os
 import collections
 import logWrite
 import constant
@@ -80,41 +80,72 @@ def on_mouse(event, x, y, flags, frame):
         frameRect = cv2.resize(frameRect, (0,0), fx=constant.RESCALE_FACTOR, fy=constant.RESCALE_FACTOR, interpolation=cv2.INTER_NEAREST)
         cv2.imshow('frame',frameRect)
 
+def is_frame_file(f):
+    return f.endswith('.png') or f.endswith('.jpg') or \
+    f.endswith('.jpeg')
+
+
+def read_frames_from_video(cap):
+    while cap.isOpened:
+        success, frame = cap.read()
+        if success:
+            yield frame
+        else:
+            break
+
+def get_frames(frame_location):
+    frames = []
+    is_dir = os.path.isdir(frame_location)
+
+    if is_dir:
+        frames = [f for f in os.listdir(frame_location) if is_frame_file(f)]
+    else:
+        cap = cv2.VideoCapture(frame_location)
+        if not cap.isOpened():
+            print "Error: failed to read video file ", frame_location
+            sys.exit()
+        frames = [f for f in read_frames_from_video(cap)]
+        cap.release
+
+    return frames
+
 def main(argv):
     global selected_area
     global brush_size
     global highlighted_area
 
     if len(sys.argv) != 2:
-        print "Usage: main.py <file name>"
+        print "Usage: main.py <frame location>"
         sys.exit()
 
-    cap = cv2.VideoCapture(sys.argv[1])
+    frame_location = sys.argv[1]
+    frames = get_frames(frame_location)
 
-    if not cap.isOpened():
-      print "Error when reading image file"
+    if len(frames) == 0:
+        print "Error: failed to read frames from ", frame_location
+        sys.exit()
 
     log = logWrite.logWrite()
     log.new(str(sys.argv[1]))
 
-    while(cap.isOpened()):
-        ROIs.clear()
-        ret, frame = cap.read()
+    current_frame_num = 1
 
-        if int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)) == cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT):
-            break
+    while True:
+        ROIs.clear()
+        
+        frame = frames[current_frame_num]
 
         height, width, channels = frame.shape
         highlighted_area = np.zeros((height, width, 3), np.uint8)
         selected_area = np.zeros((height, width, 3), np.uint8)
         try:
-            load_ROIs(frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))])
+            load_ROIs(frame_metadata[current_frame_num])
         except Exception as e:
             print "Warning: Failure to load ROIs that were previously chosen for this frame."
             print e
 
         cv2.putText(frame,
-        str(int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))),
+        str(current_frame_num),
         (6, 18),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.5,
@@ -136,17 +167,17 @@ def main(argv):
                 print k + " was pressed"
 
         if len(ROIs) > 0:
-            frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))] = tuple(ROIs)
+            frame_metadata[current_frame_num] = tuple(ROIs)
             
         if k==chr(27):    # Esc key to stop
             break
         elif k=='u':
             ROIs.clear()
-            frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))] = "UNCERTAIN"
+            frame_metadata[current_frame_num] = "UNCERTAIN"
             print "UNCERTAIN"
         elif k=='n':
             ROIs.clear()
-            frame_metadata[int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES))] = "EMPTY"
+            frame_metadata[current_frame_num] = "EMPTY"
             print "EMPTY"
         elif k=='w':
             cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, int(cap.get(cv2.cv.CV_CAP_PROP_POS_FRAMES)) - constant.FRAME_SKIP - 1)
@@ -164,4 +195,4 @@ def main(argv):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])
